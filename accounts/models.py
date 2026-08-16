@@ -1,6 +1,8 @@
 from django.db import models
 
 from django.contrib.auth.models import AbstractUser
+from datetime import timedelta
+from django.utils import timezone
 import random 
 
 class User(AbstractUser):
@@ -21,6 +23,14 @@ class OTP(models.Model):
         self.code = str(random.randint(100000, 999999))
         self.save()
 
+    def can_resend(self):
+        # Allow resend after 60 seconds
+        return timezone.now() > self.created_at + timedelta(seconds=60)
+
+    def is_expired(self):
+        # OTP expires after 5 minutes
+        return timezone.now() > self.created_at + timedelta(minutes=5)
+
 
 class PasswordResetOTP(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -30,4 +40,11 @@ class PasswordResetOTP(models.Model):
 
     def generate_code(self):
         self.code = str(random.randint(100000, 999999))
-        self.save()        
+        self.save()
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)
+
+    def can_resend(self):
+        # Allow resend after 60 seconds
+        return timezone.now() > self.created_at + timedelta(seconds=60)

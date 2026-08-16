@@ -3,14 +3,17 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.core.mail import send_mail
 from django.conf import settings
 from .serializers import (
     RegisterSerializer, LoginSerializer, OTPVerifySerializer,
-    ForgotPasswordSerializer, VerifyResetOTPSerializer, ResetPasswordSerializer
+    ResendVerificationOTPSerializer, ForgotPasswordSerializer, 
+    VerifyResetOTPSerializer, ResetPasswordSerializer, ChangePasswordSerializer
 )
 from .models import OTP, PasswordResetOTP
+
+User = get_user_model()
 
 
 class RegisterView(APIView):
@@ -37,23 +40,25 @@ class VerifyOTPView(APIView):
             email = serializer.validated_data['email']
             code = serializer.validated_data['code']
             try:
-                from django.contrib.auth import get_user_model
-                User = get_user_model()
                 user = User.objects.get(email=email)
                 otp = OTP.objects.filter(user=user, code=code).last()
-                if otp:
-                    user.is_active = True
-                    user.is_verified = True
-                    user.save()
-                    otp.delete()
-                    refresh = RefreshToken.for_user(user)
-                    return Response({
-                        'message': 'Account verified',
-                        'refresh': str(refresh),
-                        'access': str(refresh.access_token),
-                    })
-                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-            except Exception:
+                if not otp:
+                    return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                if otp.is_expired():
+                    return Response({'error': 'OTP has expired'}, status=status.HTTP_400_BAD_REQUEST)
+
+                user.is_active = True
+                user.is_verified = True
+                user.save()
+                otp.delete()
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'message': 'Account verified',
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                })
+            except User.DoesNotExist:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -102,15 +107,49 @@ class ProfileView(APIView):
         })
 
 
+class ResendVerificationOTPView(APIView):
+    def post(self, request):
+        serializer = ResendVerificationOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            try:
+                user = User.objects.get(email=email)
+                
+                if user.is_verified:
+                    return Response({'error': 'User is already verified.'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                last_otp = OTP.objects.filter(user=user).last()
+                if last_otp and not last_otp.can_resend():
+                    return Response({'error': 'Please wait 60 seconds before requesting a new OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+                
+                OTP.objects.filter(user=user).delete()
+                otp = OTP.objects.create(user=user)
+                otp.generate_code()
+                
+                send_mail(
+                    'Verify your account',
+                    f'Your new OTP is: {otp.code}',
+                    settings.EMAIL_HOST_USER,
+                    [user.email],
+                )
+                return Response({'message': 'A new OTP has been sent to your email.'})
+            except User.DoesNotExist:
+                return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ForgotPasswordView(APIView):
     def post(self, request):
         serializer = ForgotPasswordSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
             try:
-                from django.contrib.auth import get_user_model
-                User = get_user_model()
                 user = User.objects.get(email=email)
+                
+                last_otp = PasswordResetOTP.objects.filter(user=user).last()
+                if last_otp and not last_otp.can_resend():
+                    return Response({'error': 'Please wait 60 seconds before requesting a new OTP.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+                
                 PasswordResetOTP.objects.filter(user=user).delete()
                 otp = PasswordResetOTP.objects.create(user=user)
                 otp.generate_code()
@@ -121,7 +160,29 @@ class ForgotPasswordView(APIView):
                     [user.email],
                 )
                 return Response({'message': 'OTP sent to your email'})
-            except Exception:
+            except User.DoesNotExist:
+                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyResetOTPView(APIView):
+    def post(self, request):
+        serializer = VerifyResetOTPSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            code = serializer.validated_data['code']
+            try:
+                user = User.objects.get(email=email)
+                otp = PasswordResetOTP.objects.filter(user=user, code=code, is_used=False).last()
+
+                if not otp:
+                    return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+                if otp.is_expired():
+                    return Response({'error': 'OTP has expired'}, status=status.HTTP_400_BAD_REQUEST)
+
+                return Response({'message': 'OTP verified successfully'}, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -134,17 +195,41 @@ class ResetPasswordView(APIView):
             code = serializer.validated_data['code']
             new_password = serializer.validated_data['new_password']
             try:
-                from django.contrib.auth import get_user_model
-                User = get_user_model()
                 user = User.objects.get(email=email)
                 otp = PasswordResetOTP.objects.filter(user=user, code=code, is_used=False).last()
-                if otp:
-                    user.set_password(new_password)
-                    user.save()
-                    otp.is_used = True
-                    otp.save()
-                    return Response({'message': 'Password reset successful'})
-                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-            except Exception:
+
+                if not otp:
+                    return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+                if otp.is_expired():
+                    return Response({'error': 'OTP has expired'}, status=status.HTTP_400_BAD_REQUEST)
+
+                user.set_password(new_password)
+                user.save()
+
+                otp.is_used = True
+                otp.save()
+
+                return Response({'message': 'Password reset successful'}, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            old_password = serializer.validated_data['old_password']
+            new_password = serializer.validated_data['new_password']
+
+            if not user.check_password(old_password):
+                return Response({'error': 'Old password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+            user.set_password(new_password)
+            user.save()
+            return Response({'message': 'Password changed successfully'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

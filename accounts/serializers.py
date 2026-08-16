@@ -25,6 +25,8 @@ class OTPVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=6)    
 
 
+class ResendVerificationOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
 
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -38,4 +40,9 @@ class VerifyResetOTPSerializer(serializers.Serializer):
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField(max_length=6)
-    new_password = serializers.CharField(min_length=6)    
+    new_password = serializers.CharField(min_length=6)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, min_length=6)    
