@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "BCS Question Backend",
-		"description": "API collection for BCS Question Backend - Authentication & User Management",
+		"description": "API collection for BCS Question Backend - Standard Response Format",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -33,7 +33,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "register", ""]
 						},
-						"description": "Register a new user. An OTP will be sent to the provided email for verification."
+						"description": "Register a new user. Returns { success, message, data }."
 					},
 					"response": []
 				},
@@ -56,7 +56,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "verify-otp", ""]
 						},
-						"description": "Verify the OTP sent to email after registration (5-minute expiration). Returns JWT tokens on success."
+						"description": "Verify registration OTP. Auto-saves access and refresh tokens."
 					},
 					"event": [
 						{
@@ -66,8 +66,10 @@
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    var json = pm.response.json();",
-									"    pm.collectionVariables.set('access_token', json.access);",
-									"    pm.collectionVariables.set('refresh_token', json.refresh);",
+									"    if (json.data && json.data.token) {",
+									"        pm.collectionVariables.set('access_token', json.data.token);",
+									"        pm.collectionVariables.set('refresh_token', json.data.refresh);",
+									"    }",
 									"}"
 								]
 							}
@@ -94,7 +96,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "resend-verification-otp", ""]
 						},
-						"description": "Resend registration OTP to user's email. Enforces a 60-second cooldown."
+						"description": "Resend registration OTP (60s cooldown)."
 					},
 					"response": []
 				},
@@ -117,7 +119,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "login", ""]
 						},
-						"description": "Login with email and password. Returns access and refresh JWT tokens."
+						"description": "Login with email and password. Auto-saves access and refresh tokens."
 					},
 					"event": [
 						{
@@ -127,8 +129,10 @@
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    var json = pm.response.json();",
-									"    pm.collectionVariables.set('access_token', json.access);",
-									"    pm.collectionVariables.set('refresh_token', json.refresh);",
+									"    if (json.data && json.data.token) {",
+									"        pm.collectionVariables.set('access_token', json.data.token);",
+									"        pm.collectionVariables.set('refresh_token', json.data.refresh);",
+									"    }",
 									"}"
 								]
 							}
@@ -155,7 +159,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "token", "refresh", ""]
 						},
-						"description": "Get a new access token using an unexpired refresh token."
+						"description": "Get a new access token using a refresh token."
 					},
 					"event": [
 						{
@@ -165,7 +169,9 @@
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    var json = pm.response.json();",
-									"    pm.collectionVariables.set('access_token', json.access);",
+									"    if (json.data && json.data.access) {",
+									"        pm.collectionVariables.set('access_token', json.data.access);",
+									"    }",
 									"}"
 								]
 							}
@@ -188,7 +194,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "profile", ""]
 						},
-						"description": "Get the authenticated user's profile."
+						"description": "Get the authenticated user profile."
 					},
 					"response": []
 				},
@@ -215,7 +221,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "change-password", ""]
 						},
-						"description": "Change password for an authenticated user."
+						"description": "Change password for logged-in user."
 					},
 					"response": []
 				},
@@ -242,12 +248,12 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "logout", ""]
 						},
-						"description": "Logout by blacklisting the refresh token. Requires authentication."
+						"description": "Logout by blacklisting the refresh token."
 					},
 					"response": []
 				}
 			],
-			"description": "User registration, login, token refresh, password change, logout, and profile endpoints."
+			"description": "User authentication endpoints."
 		},
 		{
 			"name": "Password Reset",
@@ -271,7 +277,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "forgot-password", ""]
 						},
-						"description": "Request a password reset OTP. Enforces a 60-second cooldown."
+						"description": "Request password reset OTP (60s cooldown)."
 					},
 					"response": []
 				},
@@ -294,7 +300,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "verify-reset-otp", ""]
 						},
-						"description": "Verify the password reset OTP (5-minute expiration)."
+						"description": "Verify password reset OTP (5-min expiry)."
 					},
 					"response": []
 				},
@@ -317,12 +323,12 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "reset-password", ""]
 						},
-						"description": "Reset password using the verified OTP (5-minute expiration)."
+						"description": "Reset password using verified OTP."
 					},
 					"response": []
 				}
 			],
-			"description": "Password reset flow: forgot → verify OTP → set new password."
+			"description": "Password reset endpoints."
 		}
 	]
 }
