@@ -290,11 +290,11 @@ class ChangePasswordView(APIView):
         serializer = ChangePasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = request.user
-        old_password = serializer.validated_data['old_password']
+        current_password = serializer.validated_data['current_password']
         new_password = serializer.validated_data['new_password']
 
-        if not user.check_password(old_password):
-            return send_error(message="Old password is incorrect", path="old_password", status_code=status.HTTP_400_BAD_REQUEST)
+        if not user.check_password(current_password):
+            return send_error(message="Current password is incorrect", path="current_password", status_code=status.HTTP_400_BAD_REQUEST)
 
         user.set_password(new_password)
         user.save()

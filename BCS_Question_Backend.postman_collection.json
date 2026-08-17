@@ -214,14 +214,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"old_password\": \"yourpassword123\",\n    \"new_password\": \"newpassword123\"\n}"
+							"raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"newpassword123\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/change-password/",
 							"host": ["{{base_url}}"],
 							"path": ["auth", "change-password", ""]
 						},
-						"description": "Change password for logged-in user."
+						"description": "Change password for logged-in user by providing current password."
 					},
 					"response": []
 				},

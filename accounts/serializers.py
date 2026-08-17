@@ -44,5 +44,21 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True, min_length=6)    
+    current_password = serializers.CharField(required=False)
+    old_password = serializers.CharField(required=False)
+    new_password = serializers.CharField(required=True, min_length=6)
+    confirm_password = serializers.CharField(required=False)
+
+    def validate(self, data):
+        current_pass = data.get('current_password') or data.get('old_password')
+        if not current_pass:
+            raise serializers.ValidationError({"current_password": "This field is required."})
+        data['current_password'] = current_pass
+
+        if data.get('confirm_password') and data.get('confirm_password') != data.get('new_password'):
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+
+        if current_pass == data.get('new_password'):
+            raise serializers.ValidationError({"new_password": "New password cannot be the same as current password."})
+
+        return data    
