@@ -1,13 +1,24 @@
 {
 	"info": {
 		"name": "BCS Question Backend",
-		"description": "API collection for BCS Question Backend - Standard Response Format",
+		"description": "Complete API Collection for BCS Question Backend with standardized response format ({ success, message, data / errorMessages })",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://127.0.0.1:8000/api"
+			"value": "http://127.0.0.1:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -33,9 +44,22 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "register", ""]
 						},
-						"description": "Register a new user. Returns { success, message, data }."
+						"description": "Register a new user account. Generates and sends a 6-digit OTP to the provided email for verification."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "201 Created",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"OTP sent to your email\",\n    \"data\": null\n}"
+						}
+					]
 				},
 				{
 					"name": "Verify Registration OTP",
@@ -56,7 +80,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "verify-otp", ""]
 						},
-						"description": "Verify registration OTP. Auto-saves access and refresh tokens."
+						"description": "Verify registration OTP (5-minute expiration). On success, activates the account and auto-saves JWT access/refresh tokens to collection variables."
 					},
 					"event": [
 						{
@@ -75,7 +99,20 @@
 							}
 						}
 					],
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Account verified successfully\",\n    \"data\": {\n        \"token\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"refresh\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
+						}
+					]
 				},
 				{
 					"name": "Resend Registration OTP",
@@ -96,9 +133,34 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "resend-verification-otp", ""]
 						},
-						"description": "Resend registration OTP (60s cooldown)."
+						"description": "Resends verification OTP to an unverified user's email. Enforces a 60-second cooldown."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"A new OTP has been sent to your email.\",\n    \"data\": null\n}"
+						},
+						{
+							"name": "429 Rate Limited",
+							"status": "Too Many Requests",
+							"code": 429,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": false,\n    \"message\": \"Please wait 60 seconds before requesting a new OTP.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Please wait 60 seconds before requesting a new OTP.\"\n        }\n    ]\n}"
+						}
+					]
 				},
 				{
 					"name": "Login",
@@ -119,7 +181,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "login", ""]
 						},
-						"description": "Login with email and password. Auto-saves access and refresh tokens."
+						"description": "Login with email and password. Automatically saves access_token and refresh_token to collection variables."
 					},
 					"event": [
 						{
@@ -138,7 +200,20 @@
 							}
 						}
 					],
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Login successfully\",\n    \"data\": {\n        \"token\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"refresh\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
+						}
+					]
 				},
 				{
 					"name": "Token Refresh",
@@ -159,7 +234,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "token", "refresh", ""]
 						},
-						"description": "Get a new access token using a refresh token."
+						"description": "Exchange a valid refresh token for a fresh access token. Automatically updates {{access_token}}."
 					},
 					"event": [
 						{
@@ -177,7 +252,20 @@
 							}
 						}
 					],
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Token refreshed successfully\",\n    \"data\": {\n        \"access\": \"eyJhbGciOiJIUzI1Ni...\"\n    }\n}"
+						}
+					]
 				},
 				{
 					"name": "Profile",
@@ -194,9 +282,22 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "profile", ""]
 						},
-						"description": "Get the authenticated user profile."
+						"description": "Get profile details of the authenticated user."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Profile retrieved successfully\",\n    \"data\": {\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
+						}
+					]
 				},
 				{
 					"name": "Change Password",
@@ -223,7 +324,20 @@
 						},
 						"description": "Change password for logged-in user by providing current password."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Password changed successfully\",\n    \"data\": null\n}"
+						}
+					]
 				},
 				{
 					"name": "Logout",
@@ -248,12 +362,25 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "logout", ""]
 						},
-						"description": "Logout by blacklisting the refresh token."
+						"description": "Logout and blacklist the refresh token."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Logged out successfully\",\n    \"data\": null\n}"
+						}
+					]
 				}
 			],
-			"description": "User authentication endpoints."
+			"description": "Authentication and user lifecycle endpoints."
 		},
 		{
 			"name": "Password Reset",
@@ -279,7 +406,20 @@
 						},
 						"description": "Request password reset OTP (60s cooldown)."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"OTP sent to your email\",\n    \"data\": null\n}"
+						}
+					]
 				},
 				{
 					"name": "Verify Reset OTP",
@@ -300,9 +440,22 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "verify-reset-otp", ""]
 						},
-						"description": "Verify password reset OTP (5-min expiry)."
+						"description": "Verify password reset OTP (5-minute expiration)."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"OTP verified successfully\",\n    \"data\": null\n}"
+						}
+					]
 				},
 				{
 					"name": "Reset Password",
@@ -323,12 +476,25 @@
 							"host": ["{{base_url}}"],
 							"path": ["auth", "reset-password", ""]
 						},
-						"description": "Reset password using verified OTP."
+						"description": "Reset password using verified OTP (5-minute expiration)."
 					},
-					"response": []
+					"response": [
+						{
+							"name": "200 Success",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Password reset successful\",\n    \"data\": null\n}"
+						}
+					]
 				}
 			],
-			"description": "Password reset endpoints."
+			"description": "Password reset and recovery flow."
 		}
 	]
 }
