@@ -1,1627 +1,1958 @@
 {
-	"info": {
-		"_postman_id": "bcs-question-backend-api",
-		"name": "BCS Question Backend",
-		"description": "Complete and standardized API Collection for BCS Question Backend.\n\nAll endpoints adhere to the standardized response envelope:\n- **Success Response**: `{ \"success\": true, \"message\": \"...\", \"data\": ... }`\n- **Error Response**: `{ \"success\": false, \"message\": \"...\", \"errorMessages\": [{ \"path\": \"field\", \"message\": \"...\" }] }`\n\nTokens (`access_token`, `refresh_token`) are automatically captured and updated into Collection Variables upon running `Login`, `Verify Registration OTP`, or `Token Refresh`.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "http://127.0.0.1:8000/api",
-			"type": "string"
-		},
-		{
-			"key": "access_token",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "refresh_token",
-			"value": "",
-			"type": "string"
-		}
-	],
-	"item": [
-		{
-			"name": "Auth",
-			"description": "Authentication and user lifecycle endpoints (Registration, OTP verification, Login, Profile, Password management, Logout).",
-			"item": [
-				{
-					"name": "Register",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"testuser\",\n    \"password\": \"yourpassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/register/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "register", ""]
-						},
-						"description": "Register a new user account. Creates an inactive user and sends a 6-digit OTP to the registered email."
-					},
-					"response": [
-						{
-							"name": "201 Created - OTP Sent",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"testuser\",\n    \"password\": \"yourpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/register/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "register", ""]
-								}
-							},
-							"status": "Created",
-							"code": 201,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"OTP sent to your email\",\n    \"data\": null\n}"
-						},
-						{
-							"name": "400 Bad Request - Email Already Exists",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"testuser\",\n    \"password\": \"yourpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/register/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "register", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"user with this email already exists.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"user with this email already exists.\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Verify Registration OTP",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    var json = pm.response.json();",
-									"    if (json.data && json.data.token) {",
-									"        pm.collectionVariables.set('access_token', json.data.token);",
-									"        pm.collectionVariables.set('refresh_token', json.data.refresh);",
-									"        console.log('Access token and refresh token saved.');",
-									"    }",
-									"}"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/verify-otp/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "verify-otp", ""]
-						},
-						"description": "Verify registration OTP (5-minute expiration). On success, marks the user active and verified, and automatically saves JWT access & refresh tokens to collection variables."
-					},
-					"response": [
-						{
-							"name": "200 Success - Account Verified",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/verify-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "verify-otp", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Account verified successfully\",\n    \"data\": {\n        \"token\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"refresh\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
-						},
-						{
-							"name": "400 Bad Request - Invalid OTP",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"000000\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/verify-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "verify-otp", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Invalid OTP\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"Invalid OTP\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "400 Bad Request - OTP Expired",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/verify-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "verify-otp", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"OTP has expired\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"OTP has expired\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "404 Not Found - User Not Found",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"nonexistent@example.com\",\n    \"code\": \"123456\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/verify-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "verify-otp", ""]
-								}
-							},
-							"status": "Not Found",
-							"code": 404,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"User not found\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Resend Registration OTP",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/resend-verification-otp/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "resend-verification-otp", ""]
-						},
-						"description": "Resends verification OTP to an unverified user's email. Enforces a 60-second cooldown period between requests."
-					},
-					"response": [
-						{
-							"name": "200 Success - New OTP Sent",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/resend-verification-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "resend-verification-otp", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"A new OTP has been sent to your email.\",\n    \"data\": null\n}"
-						},
-						{
-							"name": "400 Bad Request - Already Verified",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/resend-verification-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "resend-verification-otp", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"User is already verified.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User is already verified.\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "429 Too Many Requests - 60s Cooldown",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/resend-verification-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "resend-verification-otp", ""]
-								}
-							},
-							"status": "Too Many Requests",
-							"code": 429,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Please wait 60 seconds before requesting a new OTP.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Please wait 60 seconds before requesting a new OTP.\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "404 Not Found - User Not Found",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"nonexistent@example.com\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/resend-verification-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "resend-verification-otp", ""]
-								}
-							},
-							"status": "Not Found",
-							"code": 404,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"User not found.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found.\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Login",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    var json = pm.response.json();",
-									"    if (json.data && json.data.token) {",
-									"        pm.collectionVariables.set('access_token', json.data.token);",
-									"        pm.collectionVariables.set('refresh_token', json.data.refresh);",
-									"        console.log('Access token and refresh token saved.');",
-									"    }",
-									"}"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"yourpassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/login/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "login", ""]
-						},
-						"description": "Authenticate with email and password. Automatically stores `access_token` and `refresh_token` into collection variables upon successful login."
-					},
-					"response": [
-						{
-							"name": "200 Success - Logged In",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"yourpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Login successfully\",\n    \"data\": {\n        \"token\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"refresh\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
-						},
-						{
-							"name": "401 Unauthorized - Invalid Credentials",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"wrongpassword\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login", ""]
-								}
-							},
-							"status": "Unauthorized",
-							"code": 401,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Invalid credentials\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Invalid credentials\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "403 Forbidden - Email Unverified",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"unverified@example.com\",\n    \"password\": \"yourpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login", ""]
-								}
-							},
-							"status": "Forbidden",
-							"code": 403,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Please verify your email first\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"Please verify your email first\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Token Refresh (Custom Response)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    var json = pm.response.json();",
-									"    if (json.data && json.data.access) {",
-									"        pm.collectionVariables.set('access_token', json.data.access);",
-									"        console.log('New access token saved.');",
-									"    }",
-									"}"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/token/refresh/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "token", "refresh", ""]
-						},
-						"description": "Exchange a valid refresh token for a fresh access token using the standardized response format. Automatically updates `access_token`."
-					},
-					"response": [
-						{
-							"name": "200 Success - Token Refreshed",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/token/refresh/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "token", "refresh", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Token refreshed successfully\",\n    \"data\": {\n        \"access\": \"eyJhbGciOiJIUzI1Ni...\"\n    }\n}"
-						},
-						{
-							"name": "401 Unauthorized - Invalid Refresh Token",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"refresh\": \"invalid_token_string\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/token/refresh/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "token", "refresh", ""]
-								}
-							},
-							"status": "Unauthorized",
-							"code": 401,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Token is invalid or expired\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Token is invalid or expired\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Profile",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/auth/profile/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "profile", ""]
-						},
-						"description": "Fetch user details of the currently authenticated user using JWT access token."
-					},
-					"response": [
-						{
-							"name": "200 Success - Profile Fetched",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{access_token}}"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/auth/profile/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "profile", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Profile retrieved successfully\",\n    \"data\": {\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
-						},
-						{
-							"name": "401 Unauthorized - Missing / Invalid Token",
-							"originalRequest": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer invalid_token"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/auth/profile/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "profile", ""]
-								}
-							},
-							"status": "Unauthorized",
-							"code": 401,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Given token not valid for any token type\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Given token not valid for any token type\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Change Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"newpassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/change-password/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "change-password", ""]
-						},
-						"description": "Change account password for the logged-in user. Supports `current_password` (or `old_password`), `new_password` (min length 6), and optional `confirm_password`."
-					},
-					"response": [
-						{
-							"name": "200 Success - Password Changed",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{access_token}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"newpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/change-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "change-password", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Password changed successfully\",\n    \"data\": null\n}"
-						},
-						{
-							"name": "400 Bad Request - Incorrect Current Password",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{access_token}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"current_password\": \"wrongpass\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"newpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/change-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "change-password", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Current password is incorrect\",\n    \"errorMessages\": [\n        {\n            \"path\": \"current_password\",\n            \"message\": \"Current password is incorrect\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "400 Bad Request - Passwords Do Not Match",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{access_token}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"differentpassword\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/change-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "change-password", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Passwords do not match.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"confirm_password\",\n            \"message\": \"Passwords do not match.\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "400 Bad Request - Same As Current Password",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{access_token}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"yourpassword123\",\n    \"confirm_password\": \"yourpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/change-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "change-password", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"New password cannot be the same as current password.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"new_password\",\n            \"message\": \"New password cannot be the same as current password.\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Logout",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    pm.collectionVariables.set('access_token', '');",
-									"    pm.collectionVariables.set('refresh_token', '');",
-									"    console.log('Tokens cleared on logout.');",
-									"}"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/logout/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "logout", ""]
-						},
-						"description": "Log out authenticated user and blacklist the refresh token. Clears collection variables upon success."
-					},
-					"response": [
-						{
-							"name": "200 Success - Logged Out",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{access_token}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/logout/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "logout", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Logged out successfully\",\n    \"data\": null\n}"
-						},
-						{
-							"name": "400 Bad Request - Invalid or Expired Token",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									},
-									{
-										"key": "Authorization",
-										"value": "Bearer {{access_token}}"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"refresh\": \"invalid_token\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/logout/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "logout", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Invalid or expired token\",\n    \"errorMessages\": [\n        {\n            \"path\": \"refresh\",\n            \"message\": \"Invalid or expired token\"\n        }\n    ]\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "Password Reset",
-			"description": "Password reset flow using email OTP verification (Forgot Password -> Verify Reset OTP -> Reset Password).",
-			"item": [
-				{
-					"name": "Forgot Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/forgot-password/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "forgot-password", ""]
-						},
-						"description": "Request a password reset OTP sent to the user's email address. Enforces a 60-second cooldown period."
-					},
-					"response": [
-						{
-							"name": "200 Success - OTP Sent",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/forgot-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "forgot-password", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"OTP sent to your email\",\n    \"data\": null\n}"
-						},
-						{
-							"name": "429 Too Many Requests - 60s Cooldown",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/forgot-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "forgot-password", ""]
-								}
-							},
-							"status": "Too Many Requests",
-							"code": 429,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Please wait 60 seconds before requesting a new OTP.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Please wait 60 seconds before requesting a new OTP.\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "404 Not Found - User Not Found",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"nonexistent@example.com\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/forgot-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "forgot-password", ""]
-								}
-							},
-							"status": "Not Found",
-							"code": 404,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"User not found\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Verify Reset OTP",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/verify-reset-otp/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "verify-reset-otp", ""]
-						},
-						"description": "Verify password reset OTP before setting a new password (5-minute expiration)."
-					},
-					"response": [
-						{
-							"name": "200 Success - OTP Verified",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/verify-reset-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "verify-reset-otp", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"OTP verified successfully\",\n    \"data\": null\n}"
-						},
-						{
-							"name": "400 Bad Request - Invalid OTP",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"000000\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/verify-reset-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "verify-reset-otp", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Invalid OTP\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"Invalid OTP\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "400 Bad Request - Expired OTP",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/verify-reset-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "verify-reset-otp", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"OTP has expired\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"OTP has expired\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "404 Not Found - User Not Found",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"nonexistent@example.com\",\n    \"code\": \"123456\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/verify-reset-otp/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "verify-reset-otp", ""]
-								}
-							},
-							"status": "Not Found",
-							"code": 404,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"User not found\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Reset Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\",\n    \"new_password\": \"newpassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/auth/reset-password/",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "reset-password", ""]
-						},
-						"description": "Set a new password using email, verified OTP code, and new_password (min length 6)."
-					},
-					"response": [
-						{
-							"name": "200 Success - Password Reset Complete",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\",\n    \"new_password\": \"newpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/reset-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "reset-password", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Password reset successful\",\n    \"data\": null\n}"
-						},
-						{
-							"name": "400 Bad Request - Invalid OTP",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"000000\",\n    \"new_password\": \"newpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/reset-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "reset-password", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"Invalid OTP\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"Invalid OTP\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "400 Bad Request - Expired OTP",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\",\n    \"new_password\": \"newpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/reset-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "reset-password", ""]
-								}
-							},
-							"status": "Bad Request",
-							"code": 400,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"OTP has expired\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"OTP has expired\"\n        }\n    ]\n}"
-						},
-						{
-							"name": "404 Not Found - User Not Found",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"nonexistent@example.com\",\n    \"code\": \"123456\",\n    \"new_password\": \"newpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/reset-password/",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "reset-password", ""]
-								}
-							},
-							"status": "Not Found",
-							"code": 404,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"User not found\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found\"\n        }\n    ]\n}"
-						}
-					]
-				}
-			]
-		},
-		{
-			"name": "JWT (Direct SimpleJWT)",
-			"description": "Standard SimpleJWT endpoints exposed directly under `/api/token/`.",
-			"item": [
-				{
-					"name": "Token Obtain Pair",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    var json = pm.response.json();",
-									"    if (json.access) {",
-									"        pm.collectionVariables.set('access_token', json.access);",
-									"        pm.collectionVariables.set('refresh_token', json.refresh);",
-									"        console.log('Access token and refresh token saved.');",
-									"    }",
-									"}"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"yourpassword123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/token/",
-							"host": ["{{base_url}}"],
-							"path": ["token", ""]
-						},
-						"description": "Direct SimpleJWT endpoint to obtain access and refresh token pair without custom envelope wrapper."
-					},
-					"response": [
-						{
-							"name": "200 Success - Tokens Obtained",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"yourpassword123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/token/",
-									"host": ["{{base_url}}"],
-									"path": ["token", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"refresh\": \"eyJhbGciOiJIUzI1Ni...\",\n    \"access\": \"eyJhbGciOiJIUzI1Ni...\"\n}"
-						},
-						{
-							"name": "401 Unauthorized - Invalid Credentials",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"wrongpass\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/token/",
-									"host": ["{{base_url}}"],
-									"path": ["token", ""]
-								}
-							},
-							"status": "Unauthorized",
-							"code": 401,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"success\": false,\n    \"message\": \"No active account found with the given credentials\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"No active account found with the given credentials\"\n        }\n    ]\n}"
-						}
-					]
-				},
-				{
-					"name": "Token Refresh (Direct SimpleJWT)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"type": "text/javascript",
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    var json = pm.response.json();",
-									"    if (json.access) {",
-									"        pm.collectionVariables.set('access_token', json.access);",
-									"        console.log('Access token updated.');",
-									"    }",
-									"}"
-								]
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/token/refresh/",
-							"host": ["{{base_url}}"],
-							"path": ["token", "refresh", ""]
-						},
-						"description": "Direct SimpleJWT endpoint to refresh an access token."
-					},
-					"response": [
-						{
-							"name": "200 Success - Token Refreshed",
-							"originalRequest": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/token/refresh/",
-									"host": ["{{base_url}}"],
-									"path": ["token", "refresh", ""]
-								}
-							},
-							"status": "OK",
-							"code": 200,
-							"_postman_previewlanguage": "json",
-							"header": [
-								{
-									"key": "Content-Type",
-									"value": "application/json"
-								}
-							],
-							"body": "{\n    \"access\": \"eyJhbGciOiJIUzI1Ni...\"\n}"
-						}
-					]
-				}
-			]
-		}
-	]
+    "info": {
+        "_postman_id": "bcs-question-backend-api",
+        "name": "BCS Question Backend",
+        "description": "Complete and standardized API Collection for BCS Question Backend.\n\nAll endpoints adhere to the standardized response envelope:\n- **Success Response**: `{ \"success\": true, \"message\": \"...\", \"data\": ... }`\n- **Error Response**: `{ \"success\": false, \"message\": \"...\", \"errorMessages\": [{ \"path\": \"field\", \"message\": \"...\" }] }`\n\nTokens (`access_token`, `refresh_token`) are automatically captured and updated into Collection Variables upon running `Login`, `Verify Registration OTP`, or `Token Refresh`.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000/api",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "refresh_token",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "description": "Authentication and user lifecycle endpoints (Registration, OTP verification, Login, Profile, Password management, Logout).",
+            "item": [
+                {
+                    "name": "Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"testuser\",\n    \"password\": \"yourpassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/register/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "register",
+                                ""
+                            ]
+                        },
+                        "description": "Register a new user account. Creates an inactive user and sends a 6-digit OTP to the registered email."
+                    },
+                    "response": [
+                        {
+                            "name": "201 Created - OTP Sent",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"testuser\",\n    \"password\": \"yourpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/register/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "register",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"OTP sent to your email\",\n    \"data\": null\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Email Already Exists",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"testuser\",\n    \"password\": \"yourpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/register/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "register",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"user with this email already exists.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"user with this email already exists.\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Verify Registration OTP",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.data && json.data.token) {",
+                                    "        pm.collectionVariables.set('access_token', json.data.token);",
+                                    "        pm.collectionVariables.set('refresh_token', json.data.refresh);",
+                                    "        console.log('Access token and refresh token saved.');",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/verify-otp/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "verify-otp",
+                                ""
+                            ]
+                        },
+                        "description": "Verify registration OTP (5-minute expiration). On success, marks the user active and verified, and automatically saves JWT access & refresh tokens to collection variables."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Account Verified",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/verify-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "verify-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Account verified successfully\",\n    \"data\": {\n        \"token\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"refresh\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Invalid OTP",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"000000\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/verify-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "verify-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Invalid OTP\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"Invalid OTP\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - OTP Expired",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/verify-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "verify-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"OTP has expired\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"OTP has expired\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "404 Not Found - User Not Found",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"nonexistent@example.com\",\n    \"code\": \"123456\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/verify-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "verify-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Not Found",
+                            "code": 404,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"User not found\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Resend Registration OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/resend-verification-otp/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "resend-verification-otp",
+                                ""
+                            ]
+                        },
+                        "description": "Resends verification OTP to an unverified user's email. Enforces a 60-second cooldown period between requests."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - New OTP Sent",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/resend-verification-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "resend-verification-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"A new OTP has been sent to your email.\",\n    \"data\": null\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Already Verified",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/resend-verification-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "resend-verification-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"User is already verified.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User is already verified.\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "429 Too Many Requests - 60s Cooldown",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/resend-verification-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "resend-verification-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Too Many Requests",
+                            "code": 429,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Please wait 60 seconds before requesting a new OTP.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Please wait 60 seconds before requesting a new OTP.\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "404 Not Found - User Not Found",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"nonexistent@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/resend-verification-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "resend-verification-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Not Found",
+                            "code": 404,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"User not found.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found.\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.data && json.data.token) {",
+                                    "        pm.collectionVariables.set('access_token', json.data.token);",
+                                    "        pm.collectionVariables.set('refresh_token', json.data.refresh);",
+                                    "        console.log('Access token and refresh token saved.');",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"yourpassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/login/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login",
+                                ""
+                            ]
+                        },
+                        "description": "Authenticate with email and password. Automatically stores `access_token` and `refresh_token` into collection variables upon successful login."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Logged In",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"yourpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/login/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "login",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Login successfully\",\n    \"data\": {\n        \"token\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"refresh\": \"eyJhbGciOiJIUzI1Ni...\",\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
+                        },
+                        {
+                            "name": "401 Unauthorized - Invalid Credentials",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"wrongpassword\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/login/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "login",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Invalid credentials\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Invalid credentials\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "403 Forbidden - Email Unverified",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"unverified@example.com\",\n    \"password\": \"yourpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/login/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "login",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Forbidden",
+                            "code": 403,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Please verify your email first\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"Please verify your email first\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Token Refresh (Custom Response)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.data && json.data.access) {",
+                                    "        pm.collectionVariables.set('access_token', json.data.access);",
+                                    "        console.log('New access token saved.');",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/token/refresh/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "token",
+                                "refresh",
+                                ""
+                            ]
+                        },
+                        "description": "Exchange a valid refresh token for a fresh access token using the standardized response format. Automatically updates `access_token`."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Token Refreshed",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/token/refresh/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "token",
+                                        "refresh",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Token refreshed successfully\",\n    \"data\": {\n        \"access\": \"eyJhbGciOiJIUzI1Ni...\"\n    }\n}"
+                        },
+                        {
+                            "name": "401 Unauthorized - Invalid Refresh Token",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"refresh\": \"invalid_token_string\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/token/refresh/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "token",
+                                        "refresh",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Token is invalid or expired\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Token is invalid or expired\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/auth/profile/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "profile",
+                                ""
+                            ]
+                        },
+                        "description": "Fetch user details of the currently authenticated user using JWT access token."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Profile Fetched",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/auth/profile/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "profile",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Profile retrieved successfully\",\n    \"data\": {\n        \"user_info\": {\n            \"id\": 1,\n            \"email\": \"user@example.com\",\n            \"username\": \"testuser\",\n            \"is_verified\": true\n        }\n    }\n}"
+                        },
+                        {
+                            "name": "401 Unauthorized - Missing / Invalid Token",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer invalid_token"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/auth/profile/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "profile",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Given token not valid for any token type\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Given token not valid for any token type\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Change Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"newpassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/change-password/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "change-password",
+                                ""
+                            ]
+                        },
+                        "description": "Change account password for the logged-in user. Supports `current_password` (or `old_password`), `new_password` (min length 6), and optional `confirm_password`."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Password Changed",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"newpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/change-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "change-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Password changed successfully\",\n    \"data\": null\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Incorrect Current Password",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"current_password\": \"wrongpass\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"newpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/change-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "change-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Current password is incorrect\",\n    \"errorMessages\": [\n        {\n            \"path\": \"current_password\",\n            \"message\": \"Current password is incorrect\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Passwords Do Not Match",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"newpassword123\",\n    \"confirm_password\": \"differentpassword\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/change-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "change-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Passwords do not match.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"confirm_password\",\n            \"message\": \"Passwords do not match.\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Same As Current Password",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"current_password\": \"yourpassword123\",\n    \"new_password\": \"yourpassword123\",\n    \"confirm_password\": \"yourpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/change-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "change-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"New password cannot be the same as current password.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"new_password\",\n            \"message\": \"New password cannot be the same as current password.\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    pm.collectionVariables.set('access_token', '');",
+                                    "    pm.collectionVariables.set('refresh_token', '');",
+                                    "    console.log('Tokens cleared on logout.');",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/logout/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "logout",
+                                ""
+                            ]
+                        },
+                        "description": "Log out authenticated user and blacklist the refresh token. Clears collection variables upon success."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Logged Out",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/logout/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "logout",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Logged out successfully\",\n    \"data\": null\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Invalid or Expired Token",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{access_token}}"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"refresh\": \"invalid_token\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/logout/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "logout",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Invalid or expired token\",\n    \"errorMessages\": [\n        {\n            \"path\": \"refresh\",\n            \"message\": \"Invalid or expired token\"\n        }\n    ]\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Password Reset",
+            "description": "Password reset flow using email OTP verification (Forgot Password -> Verify Reset OTP -> Reset Password).",
+            "item": [
+                {
+                    "name": "Forgot Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/forgot-password/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "forgot-password",
+                                ""
+                            ]
+                        },
+                        "description": "Request a password reset OTP sent to the user's email address. Enforces a 60-second cooldown period."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - OTP Sent",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/forgot-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "forgot-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"OTP sent to your email\",\n    \"data\": null\n}"
+                        },
+                        {
+                            "name": "429 Too Many Requests - 60s Cooldown",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/forgot-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "forgot-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Too Many Requests",
+                            "code": 429,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Please wait 60 seconds before requesting a new OTP.\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"Please wait 60 seconds before requesting a new OTP.\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "404 Not Found - User Not Found",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"nonexistent@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/forgot-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "forgot-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Not Found",
+                            "code": 404,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"User not found\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Verify Reset OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/verify-reset-otp/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "verify-reset-otp",
+                                ""
+                            ]
+                        },
+                        "description": "Verify password reset OTP before setting a new password (5-minute expiration)."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - OTP Verified",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/verify-reset-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "verify-reset-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"OTP verified successfully\",\n    \"data\": null\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Invalid OTP",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"000000\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/verify-reset-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "verify-reset-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Invalid OTP\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"Invalid OTP\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Expired OTP",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/verify-reset-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "verify-reset-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"OTP has expired\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"OTP has expired\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "404 Not Found - User Not Found",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"nonexistent@example.com\",\n    \"code\": \"123456\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/verify-reset-otp/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "verify-reset-otp",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Not Found",
+                            "code": 404,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"User not found\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Reset Password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\",\n    \"new_password\": \"newpassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/reset-password/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "reset-password",
+                                ""
+                            ]
+                        },
+                        "description": "Set a new password using email, verified OTP code, and new_password (min length 6)."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Password Reset Complete",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\",\n    \"new_password\": \"newpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/reset-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "reset-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": true,\n    \"message\": \"Password reset successful\",\n    \"data\": null\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Invalid OTP",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"000000\",\n    \"new_password\": \"newpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/reset-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "reset-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"Invalid OTP\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"Invalid OTP\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "400 Bad Request - Expired OTP",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"code\": \"123456\",\n    \"new_password\": \"newpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/reset-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "reset-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"OTP has expired\",\n    \"errorMessages\": [\n        {\n            \"path\": \"code\",\n            \"message\": \"OTP has expired\"\n        }\n    ]\n}"
+                        },
+                        {
+                            "name": "404 Not Found - User Not Found",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"nonexistent@example.com\",\n    \"code\": \"123456\",\n    \"new_password\": \"newpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/auth/reset-password/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "reset-password",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Not Found",
+                            "code": 404,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"User not found\",\n    \"errorMessages\": [\n        {\n            \"path\": \"email\",\n            \"message\": \"User not found\"\n        }\n    ]\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "JWT (Direct SimpleJWT)",
+            "description": "Standard SimpleJWT endpoints exposed directly under `/api/token/`.",
+            "item": [
+                {
+                    "name": "Token Obtain Pair",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.access) {",
+                                    "        pm.collectionVariables.set('access_token', json.access);",
+                                    "        pm.collectionVariables.set('refresh_token', json.refresh);",
+                                    "        console.log('Access token and refresh token saved.');",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"yourpassword123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/token/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "token",
+                                ""
+                            ]
+                        },
+                        "description": "Direct SimpleJWT endpoint to obtain access and refresh token pair without custom envelope wrapper."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Tokens Obtained",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"yourpassword123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/token/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "token",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"refresh\": \"eyJhbGciOiJIUzI1Ni...\",\n    \"access\": \"eyJhbGciOiJIUzI1Ni...\"\n}"
+                        },
+                        {
+                            "name": "401 Unauthorized - Invalid Credentials",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"wrongpass\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/token/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "token",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"success\": false,\n    \"message\": \"No active account found with the given credentials\",\n    \"errorMessages\": [\n        {\n            \"path\": \"\",\n            \"message\": \"No active account found with the given credentials\"\n        }\n    ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Token Refresh (Direct SimpleJWT)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.access) {",
+                                    "        pm.collectionVariables.set('access_token', json.access);",
+                                    "        console.log('Access token updated.');",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/token/refresh/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "token",
+                                "refresh",
+                                ""
+                            ]
+                        },
+                        "description": "Direct SimpleJWT endpoint to refresh an access token."
+                    },
+                    "response": [
+                        {
+                            "name": "200 Success - Token Refreshed",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{base_url}}/token/refresh/",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "token",
+                                        "refresh",
+                                        ""
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n    \"access\": \"eyJhbGciOiJIUzI1Ni...\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "BCS & Exams",
+            "description": "Endpoints for fetching categories, exams, and questions.",
+            "item": [
+                {
+                    "name": "Get Exam List",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/bcs/exams/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "bcs",
+                                "exams",
+                                ""
+                            ]
+                        },
+                        "description": "Fetches the list of exams."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
 }
